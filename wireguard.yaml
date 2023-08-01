@@ -1,0 +1,9 @@
+---
+- name: Confguration WireGuard VPN + Web-based Admin UI on LL Host
+  # Maps with relations between hosts list and roles lists
+  hosts: wireguard
+  # Anisible roles list for wireguard cluster
+  roles:
+    - upgrade
+    - docker
+    - wireguard

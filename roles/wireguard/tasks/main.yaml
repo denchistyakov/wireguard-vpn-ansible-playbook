@@ -1,0 +1,68 @@
+---
+# tasks file for wireguard
+- name: Create base directory for all configurations
+  become: true
+  ansible.builtin.file:
+    path: "{{ wireguard_base_dir }}"
+    state: directory
+
+- name: Prepare Docker Compose configuration from template
+  become: true
+  ansible.builtin.template:
+    src: docker-compose.yaml.j2
+    dest: "{{ wireguard_base_dir }}/docker-compose.yaml"
+
+- name: Create directory for Nginx configuration
+  become: true
+  ansible.builtin.file:
+    path: "{{ wireguard_nginx_conf_dir }}"
+    state: directory
+
+- name: Prepare Nginx configuration from template
+  become: true
+  ansible.builtin.template:
+    src: nginx.conf.j2
+    dest: "{{ wireguard_nginx_conf_dir }}/{{ wireguard_host }}.conf"
+
+- name: Create directory for certificates
+  become: true
+  ansible.builtin.file:
+    path: "{{ wireguard_nginx_cert_dir }}"
+    state: directory
+
+- name: Create directory for users configuration storing
+  become: true
+  ansible.builtin.file:
+    path: "{{ wireguard_conf_dir }}"
+    state: directory
+
+- name: Create directory for certbots acme-challenge files
+  become: true
+  ansible.builtin.file:
+    path: "{{ wireguard_certbot_acme_challenge_dir }}"
+    state: directory
+
+- name: Create directory for certbot configs for Nginx and for TLS-certs
+  become: true
+  ansible.builtin.file:
+    path: "{{ wireguard_certbot_conf_dir }}"
+    state: directory
+
+- name: Run service with Docker Compose
+  community.docker.docker_compose:
+    project_src: "{{ wireguard_base_dir }}"
+    files:
+      - docker-compose.yaml
+    state: present
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+
+- name: Install ufw for firewall reconfiguration
+  become: true
+  ansible.builtin.apt:
+    name: ufw
+    state: present
+
+- name: Open UPD port for external connections
+  become: true
+  ansible.builtin.command: "ufw allow {{ wireguard_udp_port }}/udp"

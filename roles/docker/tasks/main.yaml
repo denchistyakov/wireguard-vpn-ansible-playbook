@@ -1,0 +1,48 @@
+---
+# tasks file for Docker CE installation
+- name: Create docker group
+  become: true
+  ansible.builtin.group:
+    name: docker
+    state: present
+
+- name: Add ansible user to docker group 
+  become: true
+  ansible.builtin.user:
+    name: "{{ ansible_user }}"
+    groups: docker
+    append: true
+
+- name: Add Docker's official GPG key
+  become: true
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+
+- name: Setup the Docker APT repository
+  become: true
+  apt_repository:
+    repo: deb https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
+    state: present
+
+- name: Install Docker CE and plugins
+  become: true
+  ansible.builtin.apt:
+    pkg:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    update_cache: yes
+    state: present
+
+- meta: reset_connection
+
+- name: Install Docker SDK for Python
+  ansible.builtin.pip:
+    name:
+      - pyyaml
+      - docker
+      - docker-compose
+    state: present

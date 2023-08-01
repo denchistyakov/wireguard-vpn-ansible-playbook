@@ -1,0 +1,21 @@
+---
+# tasks file for upgrading packages and installing common dependencies
+- name: Update and upgrade apt packages
+  become: true
+  ansible.builtin.apt:
+    upgrade: yes
+    update_cache: yes
+    cache_valid_time: 86400 # One day
+
+- name: Install common packages
+  become: true
+  ansible.builtin.apt:
+    pkg:
+      - ca-certificates
+      - curl
+      - gnupg
+      - vim
+      - telnet
+      - python3-pip
+      - acl
+    state: present

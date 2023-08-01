@@ -1,0 +1,42 @@
+server_names_hash_bucket_size  64;
+
+## Redirects all HTTP traffic to the HTTPS host
+server { ## HTTPS redirect server
+    listen *:80;
+    server_name {{ wireguard_host }};
+    server_tokens off; ## Don't show the nginx version number, a security best practice
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    location / {
+        return 301 https://{{ wireguard_host }}:443$request_uri;
+    }
+} ## end HTTPS redirect server
+
+server { ## HTTPS server
+    http2 on;
+    listen *:443 ssl;
+    server_name {{ wireguard_host }};
+
+    ## Strong SSL Security
+    ## https://raymii.org/s/tutorials/Strong_SSL_Security_On_nginx.html & https://cipherli.st/
+    
+    ssl_certificate /etc/letsencrypt/live/{{ wireguard_host }}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/{{ wireguard_host }}/privkey.pem;
+
+    ## HSTS Config
+    ## https://www.nginx.com/blog/http-strict-transport-security-hsts-and-nginx/
+    add_header Strict-Transport-Security "max-age=63072000";
+
+    gzip on;
+
+    location / {
+        proxy_pass http://wg-easy:{{ wireguard_tcp_port }}/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "Upgrade";
+        proxy_set_header Host $host;
+    }
+} ## end HTTPS server
